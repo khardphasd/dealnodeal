@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deal or No Deal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark blue-gray background */
+            color: #e2e8f0; /* Light gray text */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for scrolling */
+            min-height: 100vh;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: #2d3748; /* Slightly lighter card background */
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+        }
+        .money-board {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem; /* Reduced gap */
+        }
+        .money-value {
+            padding: 0.3rem 0.5rem; /* Adjusted padding */
+            border: 1px solid #4a5568; /* Darker border */
+            border-radius: 0.375rem;
+            font-size: 0.8rem; /* Smaller font */
+            text-align: center;
+            background-color: #4a5568; /* Default background for values */
+            color: #e2e8f0;
+            transition: background-color 0.3s ease, color 0.3s ease, opacity 0.3s ease;
+        }
+        .money-value.low { background-color: #3182ce; color: white; } /* Blue for low values */
+        .money-value.medium { background-color: #dd6b20; color: white; } /* Orange for medium values */
+        .money-value.high { background-color: #c53030; color: white; } /* Red for high values */
+
+        .money-value.opened {
+            background-color: #718096 !important; /* Gray out opened values */
+            color: #a0aec0 !important;
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .briefcase {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 5/4; /* Slightly wider than tall */
+            background-color: #a0aec0; /* Silver-ish briefcase */
+            border: 2px solid #4a5568;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: #1a202c;
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 -2px 2px rgba(0,0,0,0.1);
+        }
+        .briefcase:hover:not(.opened):not(.player-chosen-visual):not(.disabled) {
+            transform: translateY(-3px) scale(1.03);
+            background-color: #cbd5e0;
+        }
+        .briefcase.opened {
+            background-color: #e53e3e; /* Red when opened to show value */
+            color: white;
+            cursor: not-allowed;
+            opacity: 0.8;
+            font-size: 0.9rem; /* Smaller font to fit value */
+        }
+        .briefcase.player-chosen-visual {
+            background-color: #ecc94b; /* Gold for player's chosen case */
+            color: #1a202c;
+            cursor: not-allowed;
+            border-width: 3px;
+            border-color: #d69e2e;
+            box-shadow: 0 0 15px #ecc94b;
+        }
+         .briefcase.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        #player-case-display {
+            background-color: #4a5568;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            min-height: 80px; /* Ensure space for the case */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .player-case-placeholder {
+            font-style: italic;
+            color: #a0aec0;
+        }
+        .message-area {
+            background-color: rgba(26, 32, 44, 0.8); /* Darker, slightly transparent */
+            border: 1px solid #4a5568;
+            min-height: 80px; /* Increased min-height for banter */
+            padding: 0.75rem; /* Added padding */
+        }
+        .banker-banter {
+            font-style: italic;
+            color: #fbd38d; /* A gold-ish color for banter */
+            margin-bottom: 0.5rem;
+            display: block; /* Ensure it takes its own line */
+        }
+        .action-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            color: white;
+            margin: 0 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .deal-button { background-color: #38a169; } /* Green */
+        .deal-button:hover { background-color: #2f855a; }
+        .no-deal-button { background-color: #e53e3e; } /* Red */
+        .no-deal-button:hover { background-color: #c53030; }
+        .new-game-button {
+            background-color: #3182ce; /* Blue */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .new-game-button:hover { background-color: #2b6cb0; }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .grid-cols-12 { grid-template-columns: repeat(1, minmax(0, 1fr)); } /* Stack columns */
+            #money-board-left, #money-board-right {
+                grid-column: span 1 / span 1;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); /* Responsive money values */
+                gap: 0.25rem;
+                margin-bottom: 1rem;
+            }
+            #game-area { grid-column: span 1 / span 1; }
+            #briefcases-grid { grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 0.375rem; }
+            .briefcase { font-size: 0.875rem; }
+            .briefcase.opened { font-size: 0.75rem; }
+            .money-value { font-size: 0.7rem; padding: 0.25rem 0.4rem;}
+            .action-button { padding: 0.5rem 1rem; font-size: 0.875rem; }
+            .message-area { font-size: 0.9rem; /* Adjusted for potentially more text */ }
+            .banker-banter { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center mb-6 text-yellow-400">Deal or No Deal</h1>
+
+        <div class="grid grid-cols-12 gap-4">
+            <div id="money-board-left" class="col-span-2 money-board"></div>
+
+            <div id="game-area" class="col-span-8 flex flex-col items-center">
+                <div id="player-case-display" class="mb-4 text-center w-full max-w-xs">
+                    <span class="block text-lg font-semibold mb-1">Your Chosen Case</span>
+                    <div id="player-chosen-case-visual" class="briefcase player-case-placeholder w-24 h-20 mx-auto flex items-center justify-center">?</div>
+                </div>
+
+                <div id="briefcases-grid" class="grid grid-cols-7 gap-2 mb-4 w-full">
+                    </div>
+
+                <div id="message-area" class="my-4 p-3 bg-gray-700 rounded text-center text-lg w-full">
+                    Select your lucky briefcase.
+                </div>
+
+                <div id="action-buttons" class="text-center mb-4">
+                    <button id="deal-button" class="action-button deal-button hidden">DEAL</button>
+                    <button id="no-deal-button" class="action-button no-deal-button hidden">NO DEAL</button>
+                </div>
+            </div>
+
+            <div id="money-board-right" class="col-span-2 money-board"></div>
+        </div>
+
+        <div class="text-center mt-6">
+            <button id="new-game-button" class="new-game-button">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        const MONEY_VALUES = [
+            0.01, 1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 750,
+            1000, 5000, 10000, 25000, 50000, 75000, 100000, 200000, 300000,
+            400000, 500000, 750000, 1000000
+        ];
+        const CASES_TO_OPEN_PER_ROUND = [0, 6, 5, 4, 3, 2, 1, 1, 1, 1]; // Index 0 dummy
+        const BANKER_COEFFICIENTS = [0, 0.20, 0.30, 0.45, 0.60, 0.75, 0.85, 0.90, 0.95, 1.0]; // Adjusted coefficients
+
+        let gameState = {};
+
+        const briefcasesGrid = document.getElementById('briefcases-grid');
+        const moneyBoardLeft = document.getElementById('money-board-left');
+        const moneyBoardRight = document.getElementById('money-board-right');
+        const messageArea = document.getElementById('message-area');
+        const dealButton = document.getElementById('deal-button');
+        const noDealButton = document.getElementById('no-deal-button');
+        const newGameButton = document.getElementById('new-game-button');
+        const playerChosenCaseVisual = document.getElementById('player-chosen-case-visual');
+
+        function formatCurrency(amount) {
+            return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: amount < 1 ? 2 : 0, maximumFractionDigits: amount < 1 ? 2 : 0 });
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function getMoneyValueCategory(value) {
+            if (value < 1000) return 'low';
+            if (value < 100000) return 'medium';
+            return 'high';
+        }
+
+        function renderMoneyBoard() {
+            moneyBoardLeft.innerHTML = '';
+            moneyBoardRight.innerHTML = '';
+            const sortedMoneyValues = [...MONEY_VALUES].sort((a, b) => a - b);
+            
+            sortedMoneyValues.forEach((value, index) => {
+                const valueEl = document.createElement('div');
+                valueEl.classList.add('money-value');
+                valueEl.classList.add(getMoneyValueCategory(value));
+                valueEl.dataset.value = value;
+                valueEl.textContent = formatCurrency(value);
+                if (gameState.revealedValues.includes(value)) {
+                    valueEl.classList.add('opened');
+                }
+                if (index < sortedMoneyValues.length / 2) {
+                    moneyBoardLeft.appendChild(valueEl);
+                } else {
+                    moneyBoardRight.appendChild(valueEl);
+                }
+            });
+        }
+
+        function renderBriefcases() {
+            briefcasesGrid.innerHTML = '';
+            for (let i = 0; i < 26; i++) {
+                const caseEl = document.createElement('div');
+                caseEl.classList.add('briefcase');
+                caseEl.dataset.caseIndex = i;
+                caseEl.textContent = i + 1;
+
+                if (gameState.caseStatus[i] === 'opened') {
+                    caseEl.classList.add('opened');
+                    caseEl.textContent = formatCurrency(gameState.allCaseValues[i]);
+                } else if (gameState.caseStatus[i] === 'player_chosen') {
+                    caseEl.classList.add('player-chosen-visual', 'disabled');
+                }
+
+                // Disable cases if not in a phase where they can be clicked
+                if (gameState.phase !== 'INIT_PICK' && gameState.phase !== 'OPENING_CASES') {
+                    caseEl.classList.add('disabled');
+                }
+                // Specifically disable already opened/chosen cases during OPENING_CASES phase
+                 if (gameState.phase === 'OPENING_CASES' && gameState.caseStatus[i] !== 'closed') {
+                    caseEl.classList.add('disabled');
+                }
+
+                caseEl.addEventListener('click', () => handleCaseClick(i));
+                briefcasesGrid.appendChild(caseEl);
+            }
+        }
+        
+        function updatePlayerChosenCaseVisual(showNumber = true, showValue = false) {
+            if (gameState.playerCaseIndex !== -1) {
+                playerChosenCaseVisual.classList.remove('player-case-placeholder');
+                playerChosenCaseVisual.classList.add('player-chosen-visual');
+                if (showValue) {
+                    playerChosenCaseVisual.textContent = formatCurrency(gameState.playerCaseValue);
+                } else if (showNumber) {
+                    playerChosenCaseVisual.textContent = gameState.playerCaseIndex + 1;
+                }
+            } else {
+                playerChosenCaseVisual.classList.add('player-case-placeholder');
+                playerChosenCaseVisual.classList.remove('player-chosen-visual');
+                playerChosenCaseVisual.textContent = '?';
+            }
+        }
+
+        function startGame() {
+            gameState = {
+                phase: 'INIT_PICK', // INIT_PICK, OPENING_CASES, BANKER_OFFER, GAME_OVER
+                round: 0,
+                casesToOpenInCurrentRound: 0,
+                casesOpenedInCurrentRound: 0,
+                allCaseValues: [...MONEY_VALUES],
+                caseStatus: Array(26).fill('closed'), // closed, opened, player_chosen
+                playerCaseIndex: -1,
+                playerCaseValue: -1,
+                revealedValues: [], 
+                bankerOffer: 0,
+                winnings: 0
+            };
+            shuffleArray(gameState.allCaseValues);
+            
+            messageArea.innerHTML = 'Select your lucky briefcase.'; // Clear any previous banter
+            dealButton.classList.add('hidden');
+            noDealButton.classList.add('hidden');
+            
+            updatePlayerChosenCaseVisual(false); 
+            renderMoneyBoard();
+            renderBriefcases(); 
+        }
+
+        function handleCaseClick(caseIndex) {
+            // Prevent clicking if case is not 'closed' or not in the correct phase
+            if (gameState.caseStatus[caseIndex] !== 'closed') return;
+            if (gameState.phase !== 'INIT_PICK' && gameState.phase !== 'OPENING_CASES') return;
+
+
+            if (gameState.phase === 'INIT_PICK') {
+                gameState.playerCaseIndex = caseIndex;
+                gameState.playerCaseValue = gameState.allCaseValues[caseIndex];
+                gameState.caseStatus[caseIndex] = 'player_chosen';
+                
+                updatePlayerChosenCaseVisual(true); 
+                const chosenGridCase = briefcasesGrid.querySelector(`.briefcase[data-case-index='${caseIndex}']`);
+                if (chosenGridCase) {
+                    chosenGridCase.classList.add('player-chosen-visual', 'disabled');
+                }
+                advanceToNextRound();
+
+            } else if (gameState.phase === 'OPENING_CASES') {
+                if (gameState.casesOpenedInCurrentRound >= gameState.casesToOpenInCurrentRound) return;
+
+                gameState.caseStatus[caseIndex] = 'opened';
+                const valueOpened = gameState.allCaseValues[caseIndex];
+                gameState.revealedValues.push(valueOpened);
+                
+                const caseEl = briefcasesGrid.querySelector(`.briefcase[data-case-index='${caseIndex}']`);
+                if (caseEl) {
+                    caseEl.classList.add('opened', 'disabled');
+                    caseEl.textContent = formatCurrency(valueOpened);
+                }
+
+                const moneyEl = document.querySelector(`.money-value[data-value='${valueOpened}']`);
+                if (moneyEl) moneyEl.classList.add('opened');
+
+                gameState.casesOpenedInCurrentRound++;
+
+                const casesLeftToOpenThisRound = gameState.casesToOpenInCurrentRound - gameState.casesOpenedInCurrentRound;
+                if (casesLeftToOpenThisRound > 0) {
+                     messageArea.innerHTML = `You opened Case ${caseIndex + 1} containing ${formatCurrency(valueOpened)}.<br>Open ${casesLeftToOpenThisRound} more case(s).`;
+                } else {
+                     messageArea.innerHTML = `You opened Case ${caseIndex + 1} containing ${formatCurrency(valueOpened)}.`;
+                }
+
+                if (gameState.casesOpenedInCurrentRound === gameState.casesToOpenInCurrentRound) {
+                    document.querySelectorAll('#briefcases-grid .briefcase:not(.opened):not(.player-chosen-visual)').forEach(b => b.classList.add('disabled'));
+                    setTimeout(triggerBankerOffer, 1000); 
+                }
+            }
+            renderBriefcases(); // Re-render to ensure correct states and disabled status
+        }
+
+        function advanceToNextRound() {
+            gameState.round++;
+            if (gameState.round > 9) { 
+                endGame('NO_DEAL_FINAL');
+                return;
+            }
+
+            gameState.phase = 'OPENING_CASES';
+            gameState.casesToOpenInCurrentRound = CASES_TO_OPEN_PER_ROUND[gameState.round];
+            gameState.casesOpenedInCurrentRound = 0;
+            
+            messageArea.innerHTML = `NO DEAL! Round ${gameState.round}.<br>Please open ${gameState.casesToOpenInCurrentRound} case(s).`;
+            dealButton.classList.add('hidden');
+            noDealButton.classList.add('hidden');
+            renderBriefcases(); 
+        }
+
+        async function fetchBankerBanter(promptText) {
+            // This is where you would use the Gemini API.
+            // IMPORTANT: You'll need to manage your API key securely.
+            // For this example, apiKey is an empty string as per instructions.
+            // The actual API call will be made by the environment if the key is provided there.
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            let chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
+            const payload = { contents: chatHistory };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    console.error("API Error Response:", response.status, await response.text());
+                    return "The Banker is speechless for a moment...";
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    console.error("Unexpected API response structure:", result);
+                    return "The Banker seems to be thinking very hard...";
+                }
+            } catch (error) {
+                console.error('Error fetching banker banter:', error);
+                return "The Banker's line seems to be busy...";
+            }
+        }
+
+
+        async function triggerBankerOffer() {
+            gameState.phase = 'BANKER_OFFER';
+            messageArea.innerHTML = "The Banker is thinking..."; // Loading message
+            dealButton.classList.add('hidden');
+            noDealButton.classList.add('hidden');
+
+            const allUnrevealedValues = MONEY_VALUES.filter(val => !gameState.revealedValues.includes(val));
+            const sumOfAllUnrevealed = allUnrevealedValues.reduce((sum, val) => sum + val, 0);
+            const countOfAllUnrevealed = allUnrevealedValues.length;
+
+            if (countOfAllUnrevealed === 0) {
+                 endGame('NO_DEAL_FINAL'); 
+                 return;
+            }
+
+            const expectedValue = sumOfAllUnrevealed / countOfAllUnrevealed;
+            const bankerCoefficient = BANKER_COEFFICIENTS[gameState.round];
+            gameState.bankerOffer = Math.round(expectedValue * bankerCoefficient);
+            
+            const smallestUnrevealed = Math.min(...allUnrevealedValues);
+            gameState.bankerOffer = Math.max(gameState.bankerOffer, Math.round(smallestUnrevealed * 0.05), 1);
+
+            // Construct prompt for Gemini API
+            const unrevealedValuesForPrompt = MONEY_VALUES.filter(val => !gameState.revealedValues.includes(val));
+            const promptText = `You are the Banker in a game of Deal or No Deal.
+The player is in round ${gameState.round}.
+Your current offer to the player is ${formatCurrency(gameState.bankerOffer)}.
+The monetary values still in play are: ${unrevealedValuesForPrompt.map(v => formatCurrency(v)).join(', ')}.
+The player's chosen briefcase is number ${gameState.playerCaseIndex + 1}.
+Give a short, witty, or taunting message (under 25 words) to the player to go along with your offer. Be a bit cheeky!`;
+
+            const banter = await fetchBankerBanter(promptText);
+
+            messageArea.innerHTML = `<span class="banker-banter">✨ Banker's Comment: ${banter}</span>The Banker offers: ${formatCurrency(gameState.bankerOffer)}.<br>Deal or No Deal?`;
+            dealButton.classList.remove('hidden');
+            noDealButton.classList.remove('hidden');
+            renderBriefcases(); // Ensure cases are disabled during offer
+        }
+
+        dealButton.addEventListener('click', () => {
+            if (gameState.phase !== 'BANKER_OFFER') return;
+            gameState.winnings = gameState.bankerOffer;
+            endGame('DEAL');
+        });
+
+        noDealButton.addEventListener('click', () => {
+            if (gameState.phase !== 'BANKER_OFFER') return;
+            
+            let totalOpenedFromBoard = 0;
+            for(let r=1; r <= gameState.round; r++) { // Sum up to and including current round's opened cases
+                totalOpenedFromBoard += CASES_TO_OPEN_PER_ROUND[r];
+            }
+            
+            // If 25 cases from the board have been opened, only player's case remains effectively.
+            if (totalOpenedFromBoard >= 25) { 
+                 endGame('NO_DEAL_FINAL');
+            } else {
+                 advanceToNextRound();
+            }
+        });
+        
+        function endGame(reason) { 
+            gameState.phase = 'GAME_OVER';
+            dealButton.classList.add('hidden');
+            noDealButton.classList.add('hidden');
+
+            updatePlayerChosenCaseVisual(true, true);
+
+            const chosenGridCase = briefcasesGrid.querySelector(`.briefcase[data-case-index='${gameState.playerCaseIndex}']`);
+            if (chosenGridCase && !chosenGridCase.classList.contains('opened')) {
+                 chosenGridCase.classList.add('opened'); 
+                 chosenGridCase.textContent = formatCurrency(gameState.playerCaseValue);
+            }
+
+            let finalMessage = "";
+            if (reason === 'DEAL') {
+                finalMessage = `DEAL! You won ${formatCurrency(gameState.winnings)}.<br>Your chosen case (#${gameState.playerCaseIndex + 1}) had ${formatCurrency(gameState.playerCaseValue)}.`;
+            } else { 
+                gameState.winnings = gameState.playerCaseValue;
+                finalMessage = `NO DEAL! You kept your case (#${gameState.playerCaseIndex + 1}).<br>You won ${formatCurrency(gameState.winnings)}!`;
+            }
+            messageArea.innerHTML = finalMessage;
+            
+            document.querySelectorAll('#briefcases-grid .briefcase').forEach(b => b.classList.add('disabled'));
+            renderMoneyBoard(); 
+        }
+
+        newGameButton.addEventListener('click', startGame);
+
+        // Initial game start
+        startGame();
+    </script>
+</body>
+</html>
