@@ -20,7 +20,7 @@
         }
         .container {
             width: 100%;
-            max-width: 1400px; /* Adjusted for potentially three panels */
+            max-width: 1400px; 
             background-color: #2d3748;
             border-radius: 0.75rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -30,6 +30,7 @@
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
+            margin-bottom: 1rem; /* Space below money boards before other elements in the column */
         }
         .money-value {
             padding: 0.25rem 0.4rem; 
@@ -76,7 +77,7 @@
             opacity: 0.8;
             font-size: 0.8rem; 
         }
-        .briefcase.player-chosen-visual {
+        .briefcase.player-chosen-visual { /* For the one in the grid */
             background-color: #ecc94b;
             color: #1a202c;
             cursor: not-allowed;
@@ -88,6 +89,7 @@
             cursor: not-allowed;
             opacity: 0.7;
         }
+        /* Player's chosen case display (now on the left) */
         #player-case-display {
             background-color: #4a5568;
             padding: 0.75rem;
@@ -97,11 +99,18 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            margin-top: 1rem; /* Space above it if money board is short */
+        }
+        #player-chosen-case-visual.briefcase { /* Specific style for the chosen case visual element */
+             width: 5rem; /* w-20 */
+             height: 4rem; /* h-16 */
         }
         .player-case-placeholder {
             font-style: italic;
             color: #a0aec0;
         }
+
+        /* Message Area and Action Buttons (now on the right) */
         .message-area {
             background-color: rgba(26, 32, 44, 0.8);
             border: 1px solid #4a5568;
@@ -109,9 +118,13 @@
             padding: 0.5rem; 
             text-align: center;
             font-size: 0.9rem; 
+            margin-bottom: 0.75rem; /* Space below message area before buttons */
+        }
+        #action-buttons {
+            text-align: center;
         }
         
-        #educational-panels-container { /* Renamed for clarity */
+        #educational-panels-container { 
             margin-top: 1.5rem; 
         }
         #probability-insights-panel, #round-commentary-panel, #practice-equation-panel {
@@ -121,7 +134,7 @@
             padding: 0.75rem;
             color: #bdc3c7;
             font-size: 0.8rem; 
-            min-height: 180px; /* Increased min-height for practice problem elements */
+            min-height: 180px; 
         }
         #probability-insights-panel h3, #practice-equation-panel h3 {
             color: #e67e22;
@@ -172,8 +185,8 @@
             font-style: italic;
             font-size: 0.75rem;
         }
-        .feedback-correct { color: #2ecc71; } /* Green for correct */
-        .feedback-incorrect { color: #e74c3c; } /* Red for incorrect */
+        .feedback-correct { color: #2ecc71; } 
+        .feedback-incorrect { color: #e74c3c; } 
 
 
         .action-button {
@@ -201,7 +214,7 @@
         }
         .new-game-button:hover { background-color: #2b6cb0; }
 
-        @media (max-width: 1024px) { /* Adjust breakpoint for three panels */
+        @media (max-width: 1024px) { 
             #educational-panels-container {
                  flex-direction: column;
             }
@@ -212,23 +225,34 @@
             #round-commentary-panel, #practice-equation-panel {
                 margin-top: 0; 
             }
+             /* Stack main game columns on medium screens too for this new layout */
+            .main-game-grid > div { /* Target direct children of the main game grid */
+                grid-column: span 12 / span 12 !important; /* Force full width */
+                margin-bottom: 1rem;
+            }
+            #game-area { /* Ensure briefcase grid is centered when stacked */
+                display: flex;
+                justify-content: center;
+            }
+            #briefcases-grid {
+                width: 100%;
+                max-width: 450px; /* Limit width of briefcase grid on smaller screens */
+            }
         }
 
         @media (max-width: 768px) {
             .container { padding: 1rem; max-width: 100%;}
-            .grid-cols-12 { grid-template-columns: repeat(1, minmax(0, 1fr)); } 
+            /* Main game grid already stacks due to above rule, further fine-tuning if needed */
             
             #money-board-left, #money-board-right { 
-                grid-column: span 1 / span 1;
-                margin-bottom: 1rem;
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); 
                 gap: 0.2rem; 
             }
-            #game-area { 
-                grid-column: span 1 / span 1; 
-            }
-            #briefcases-grid { grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); gap: 0.25rem; } 
+            #briefcases-grid { 
+                grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); 
+                gap: 0.25rem; 
+            } 
             .briefcase { font-size: 0.8rem; } 
             .briefcase.opened { font-size: 0.7rem; } 
             .money-value { font-size: 0.65rem; padding: 0.2rem 0.3rem;} 
@@ -242,29 +266,30 @@
     <div class="container">
         <h1 class="text-3xl sm:text-2xl font-bold text-center mb-4 text-yellow-400">Deal or No Deal - Probability Edition</h1>
 
-        <div class="grid grid-cols-12 gap-4">
-            <div id="money-board-left" class="col-span-2 money-board"></div>
-
-            <div id="game-area" class="col-span-8 flex flex-col items-center">
-                <div id="player-case-display" class="mb-3 text-center w-full max-w-xs">
+        <div class="grid grid-cols-12 gap-4 main-game-grid">
+            <div class="col-span-12 md:col-span-3 flex flex-col">
+                <div id="money-board-left" class="money-board"></div>
+                <div id="player-case-display" class="text-center w-full">
                     <span class="block text-md font-semibold mb-1">Your Chosen Case</span>
-                    <div id="player-chosen-case-visual" class="briefcase player-case-placeholder w-20 h-16 mx-auto flex items-center justify-center text-lg">?</div>
+                    <div id="player-chosen-case-visual" class="briefcase player-case-placeholder mx-auto flex items-center justify-center text-lg">?</div>
                 </div>
+            </div>
 
-                <div id="briefcases-grid" class="grid grid-cols-7 sm:grid-cols-5 gap-1.5 mb-3 w-full">
-                </div>
-
-                <div id="message-area" class="my-3 p-2 bg-gray-700 rounded text-md w-full">
+            <div id="game-area" class="col-span-12 md:col-span-6 flex flex-col items-center">
+                <div id="briefcases-grid" class="grid grid-cols-7 sm:grid-cols-5 gap-1.5 w-full">
+                    </div>
+            </div>
+            
+            <div class="col-span-12 md:col-span-3 flex flex-col">
+                <div id="money-board-right" class="money-board"></div>
+                <div id="message-area" class="message-area w-full">
                     Select your lucky briefcase.
                 </div>
-
-                <div id="action-buttons" class="text-center mb-3">
+                <div id="action-buttons" class="w-full">
                     <button id="deal-button" class="action-button deal-button hidden">DEAL</button>
                     <button id="no-deal-button" class="action-button no-deal-button hidden">NO DEAL</button>
                 </div>
             </div>
-            
-            <div id="money-board-right" class="col-span-2 money-board"></div>
         </div>
 
         <div class="text-center mt-4">
@@ -403,9 +428,18 @@
         }
         
         function updatePlayerChosenCaseVisual(showNumber = true, showValue = false) {
+            // This function updates the #player-chosen-case-visual element
+            // which is now in the left column under the money board.
             if (gameState.playerCaseIndex !== -1) {
                 playerChosenCaseVisual.classList.remove('player-case-placeholder');
-                playerChosenCaseVisual.classList.add('player-chosen-visual');
+                // playerChosenCaseVisual.classList.add('player-chosen-visual'); // This class is for the grid version
+                playerChosenCaseVisual.classList.add('briefcase'); // Ensure it looks like a briefcase
+                playerChosenCaseVisual.classList.add('w-20', 'h-16'); // Explicitly set size
+                 playerChosenCaseVisual.style.backgroundColor = '#ecc94b'; // Gold color
+                 playerChosenCaseVisual.style.color = '#1a202c';
+                 playerChosenCaseVisual.style.borderColor = '#d69e2e';
+
+
                 if (showValue) {
                     playerChosenCaseVisual.textContent = formatCurrency(gameState.playerCaseValue);
                 } else if (showNumber) {
@@ -413,7 +447,10 @@
                 }
             } else {
                 playerChosenCaseVisual.classList.add('player-case-placeholder');
-                playerChosenCaseVisual.classList.remove('player-chosen-visual');
+                playerChosenCaseVisual.classList.remove('briefcase', 'w-20', 'h-16');
+                playerChosenCaseVisual.style.backgroundColor = ''; 
+                playerChosenCaseVisual.style.color = '';
+                playerChosenCaseVisual.style.borderColor = '';
                 playerChosenCaseVisual.textContent = '?';
             }
         }
@@ -519,7 +556,7 @@
 
         function generatePracticeProblem() {
             const unrevealedValues = MONEY_VALUES.filter(val => !gameState.revealedValues.includes(val));
-            if (unrevealedValues.length < 3) { // Need at least 3 values for a decent problem
+            if (unrevealedValues.length < 3) { 
                 equationProblemText.textContent = "Not enough distinct values remaining for a new practice problem right now.";
                 currentPracticeProblem.answer = null;
                 equationAnswerInput.value = '';
@@ -527,9 +564,8 @@
                 return;
             }
 
-            // Select 3 or 4 random unrevealed values for the problem
             shuffleArray(unrevealedValues);
-            const numProblemValues = Math.min(unrevealedValues.length, Math.floor(Math.random() * 2) + 3); // 3 or 4 values
+            const numProblemValues = Math.min(unrevealedValues.length, Math.floor(Math.random() * 2) + 3); 
             const problemValues = unrevealedValues.slice(0, numProblemValues);
             
             const sumProblemValues = problemValues.reduce((sum, val) => sum + val, 0);
@@ -541,7 +577,7 @@
             equationProblemText.textContent = currentPracticeProblem.problem;
             equationAnswerInput.value = '';
             equationFeedbackText.textContent = '';
-            equationFeedbackText.className = ''; // Clear feedback class
+            equationFeedbackText.className = ''; 
         }
 
         checkEquationAnswerButton.addEventListener('click', () => {
@@ -557,7 +593,6 @@
                 return;
             }
 
-            // Allow for small floating point differences
             if (Math.abs(studentAnswer - currentPracticeProblem.answer) < 0.015) {
                 equationFeedbackText.textContent = "Correct! Well done. Expected Value = (Sum of values) / (Number of values).";
                 equationFeedbackText.className = 'feedback-correct';
@@ -696,7 +731,7 @@
             renderBriefcases(); 
             updateProbabilityDisplay(); 
             updateRoundCommentary('BANKER_OFFER', { offer: gameState.bankerOffer });
-            generatePracticeProblem(); // Generate new practice problem here
+            generatePracticeProblem(); 
         }
 
         dealButton.addEventListener('click', () => {
@@ -756,4 +791,4 @@
         startGame();
     </script>
 </body>
-</html>
+</ht
